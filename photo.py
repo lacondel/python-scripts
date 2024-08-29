@@ -69,7 +69,7 @@ if __name__ == "__main__":
     folder_path = input("Введите путь к папке с изображениями: ").strip()
 
     # Запрашиваем параметры масштабирования
-    scaling_choice = input("Выберите способ масштабирования (по умолчанию 600 для большей стороны, введите 'w' или 'h'): ").strip().lower()
+    scaling_choice = input("Выберите способ масштабирования (по умолчанию 400 для большей стороны, введите 'w' или 'h'): ").strip().lower()
     if scaling_choice == 'w':
         width = int(input("Введите ширину для масштабирования: ").strip())
         height = None
@@ -98,3 +98,5 @@ if __name__ == "__main__":
         resize_images_in_folder(folder_path, max_size=max_size, width=width, height=height, date_suffix=date_suffix)
     else:
         print("Указанный путь не является папкой.")
+
+input("Нажмите Enter для выхода")
