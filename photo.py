@@ -89,7 +89,7 @@ if __name__ == "__main__":
         date_suffix = datetime.now().strftime('%d.%m.%Y')
     else:
         try:
-            date_suffix = datetime.strptime(date_input, '%d.%m.%Y').strftime('%d.%м.%Y')
+            date_suffix = datetime.strptime(date_input, '%d.%m.%Y').strftime('%d.%m.%Y')
         except ValueError:
             print("Неправильный формат даты. Используется текущая дата.")
             date_suffix = datetime.now().strftime('%d.%m.%Y')
@@ -99,4 +99,4 @@ if __name__ == "__main__":
     else:
         print("Указанный путь не является папкой.")
 
-input("Нажмите Enter для выхода")
+    input("Нажмите Enter для выхода")
