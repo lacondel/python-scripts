@@ -39,10 +39,15 @@ def resize_image(image_path, max_size=None, width=None, height=None):
         print(f"Ошибка при обработке изображения {image_path}:\n {e}")
 
 # Функция транслитерации имени файла с добавлением даты
-def transliterate_filename(filename, date_suffix):
+def transliterate_filename(filename, date_suffix=None):
     name, ext = os.path.splitext(filename)   # Разделяем имя файла и расширение
-    transliterated_name = translit(name, 'ru', reversed=True)   # Транслитерация
-    new_name = f"{transliterated_name}_{date_suffix}{ext}"
+    transliterated_name = translit(name, 'ru', reversed=True) 
+    
+    if date_suffix:
+        new_name = f"{transliterated_name}_{date_suffix}{ext}"
+    else:
+        new_name = f"{transliterated_name}{ext}"
+    
     return new_name
 
 # Функция изменения всех изображений в папке
@@ -83,16 +88,21 @@ if __name__ == "__main__":
         height = None
         max_size = 400
 
-    # Запрашиваем дату для добавления к названию файлов (по умолчанию текущая дата)
-    date_input = input("Введите дату: ").strip()
-    if not date_input:
-        date_suffix = datetime.now().strftime('%d.%m.%Y')
-    else:
-        try:
-            date_suffix = datetime.strptime(date_input, '%d.%m.%Y').strftime('%d.%m.%Y')
-        except ValueError:
-            print("Неправильный формат даты. Используется текущая дата.")
+    # Дата
+    add_date = input("Добавлять дату к названию файлов? (y/n):" ).strip().lower()
+
+    if add_date == 'y':
+        date_input = input("Введите дату: ").strip()
+        if not date_input:
             date_suffix = datetime.now().strftime('%d.%m.%Y')
+        else:
+            try:
+                date_suffix = datetime.strptime(date_input, '%d.%m.%Y').strftime('%d.%m.%Y')
+            except ValueError:
+                print("Неправильный формат даты. Используется текущая дата.")
+                date_suffix = datetime.now().strftime('%d.%m.%Y')
+    else:
+        date_suffix = None
 
     if os.path.isdir(folder_path):
         resize_images_in_folder(folder_path, max_size=max_size, width=width, height=height, date_suffix=date_suffix)
