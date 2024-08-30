@@ -97,9 +97,9 @@ def resize_images_in_folder(folder_path, max_size=None, width=None, height=None,
                 os.rename(image_path, new_image_path)
                 image_path = new_image_path   # Обновляем путь к файлу
 
-            if action_choice == 'crop' and crop_type:
+            if action_choice == 'c' and crop_type:
                 crop_to_square(image_path, crop_type)
-            elif action_choice == 'resize':
+            elif action_choice == 'r':
                 resize_image(image_path, max_size=max_size, width=width, height=height)
 
 if __name__ == "__main__":
@@ -107,15 +107,15 @@ if __name__ == "__main__":
     folder_path = input("Введите путь к папке с изображениями: ").strip()
 
     # Выбор действия
-    action_choice = input("Выберите действие: обрезка или масштабирование? (crop/resize): ").strip().lower()
+    action_choice = input("Выберите действие: обрезка или масштабирование? (c/r): ").strip().lower()
 
-    if action_choice == 'crop':
+    if action_choice == 'c':
         crop_choice = input("Какую часть оставим? (top(left)/bottom(right)/center): ").strip().lower()
         crop_type = crop_choice if crop_choice in ['top', 'bottom', 'center'] else None
         width = height = max_size = None
         date_suffix = None
 
-    elif action_choice == 'resize':
+    elif action_choice == 'r':
         crop_type = None
         scaling_choice = input("Выберите способ масштабирования (по умолчанию 400 для большей стороны, введите 'w' или 'h'): ").strip().lower()
         if scaling_choice == 'w':
