@@ -3,6 +3,36 @@ from PIL import Image
 from transliterate import translit
 from datetime import datetime
 
+# Функция обрезания изображения до квадрата
+def crop_to_square(image_path, crop_type='center'):
+    with Image.open(image_path) as img:
+        width, height = img.size
+        min_dim = min(width, height)
+
+        if width > height:
+            if crop_type == 'top':
+                left = 0
+            elif crop_type == 'bottom':
+                left = width - height
+            else:
+                left = (width - height) / 2
+            top = 0
+            right = left + min_dim
+            bottom = height
+        else:
+            if crop_type == 'top':
+                top = 0
+            elif crop_type == 'bottom':
+                top = height - width
+            else:
+                top = (height - width) / 2
+            left = 0
+            right = width
+            bottom = top + min_dim
+
+        return img.crop((left, top, right, bottom))
+
+
 # Функция изменения размеров изображения
 def resize_image(image_path, max_size=None, width=None, height=None):
     try:
@@ -73,36 +103,49 @@ if __name__ == "__main__":
     # Запрашиваем путь к папке с фотографиями
     folder_path = input("Введите путь к папке с изображениями: ").strip()
 
-    # Запрашиваем параметры масштабирования
-    scaling_choice = input("Выберите способ масштабирования (по умолчанию 400 для большей стороны, введите 'w' или 'h'): ").strip().lower()
-    if scaling_choice == 'w':
-        width = int(input("Введите ширину для масштабирования: ").strip())
-        height = None
-        max_size = None
-    elif scaling_choice == 'h':
-        height = int(input("Введите высоту для масштабирования: ").strip())
-        width = None
-        max_size = None
-    else:
-        width = None
-        height = None
-        max_size = 400
+    # Выбор действия
+    action_choice = input("Выберите действие: обрезка или масштабирование? (crop/resize): ").strip().lower()
 
-    # Дата
-    add_date = input("Добавлять дату к названию файлов? (y/n):" ).strip().lower()
+    if action_choice == 'crop':
+        crop_choice = input("Какую часть оставим? (top(left)/bottom(right)/center): ").strip().lower()
+        crop_type = crop_choice if crop_choice in ['top', 'bottom', 'center'] else None
+        width = height = max_size = None
 
-    if add_date == 'y':
-        date_input = input("Введите дату: ").strip()
-        if not date_input:
-            date_suffix = datetime.now().strftime('%d.%m.%Y')
+    elif action_choice == 'resize':
+        crop_type = None
+        scaling_choice = input("Выберите способ масштабирования (по умолчанию 400 для большей стороны, введите 'w' или 'h'): ").strip().lower()
+        if scaling_choice == 'w':
+            width = int(input("Введите ширину для масштабирования: ").strip())
+            height = None
+            max_size = None
+        elif scaling_choice == 'h':
+            height = int(input("Введите высоту для масштабирования: ").strip())
+            width = None
+            max_size = None
         else:
-            try:
-                date_suffix = datetime.strptime(date_input, '%d.%m.%Y').strftime('%d.%m.%Y')
-            except ValueError:
-                print("Неправильный формат даты. Используется текущая дата.")
+            width = None
+            height = None
+            max_size = 400
+        
+        # Дата
+        add_date = input("Добавлять дату к названию файлов? (y/n):" ).strip().lower()
+
+        if add_date == 'y':
+            date_input = input("Введите дату: ").strip()
+            if not date_input:
                 date_suffix = datetime.now().strftime('%d.%m.%Y')
+            else:
+                try:
+                    date_suffix = datetime.strptime(date_input, '%d.%m.%Y').strftime('%d.%m.%Y')
+                except ValueError:
+                    print("Неправильный формат даты. Используется текущая дата.")
+                    date_suffix = datetime.now().strftime('%d.%m.%Y')
+        else:
+            date_suffix = None
+
     else:
-        date_suffix = None
+        input("Неправильный выбор действия. Нажмите Enter для выхода.")
+        exit()
 
     if os.path.isdir(folder_path):
         resize_images_in_folder(folder_path, max_size=max_size, width=width, height=height, date_suffix=date_suffix)
