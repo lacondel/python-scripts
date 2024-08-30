@@ -30,8 +30,8 @@ def crop_to_square(image_path, crop_type='center'):
             right = width
             bottom = top + min_dim
 
-        return img.crop((left, top, right, bottom))
-
+        cropped_img = img.crop((left, top, right, bottom))
+        cropped_img.save(image_path)
 
 # Функция изменения размеров изображения
 def resize_image(image_path, max_size=None, width=None, height=None):
@@ -81,7 +81,7 @@ def transliterate_filename(filename, date_suffix=None):
     return new_name
 
 # Функция изменения всех изображений в папке
-def resize_images_in_folder(folder_path, max_size=None, width=None, height=None, date_suffix=''):
+def resize_images_in_folder(folder_path, max_size=None, width=None, height=None, date_suffix='', crop_type=None, action_choice=''):
     # Перебираем все файлы в указанной папке
     for filename in os.listdir(folder_path):
         # Проверяем, является ли файл изображением
@@ -97,7 +97,10 @@ def resize_images_in_folder(folder_path, max_size=None, width=None, height=None,
                 os.rename(image_path, new_image_path)
                 image_path = new_image_path   # Обновляем путь к файлу
 
-            resize_image(image_path, max_size=max_size, width=width, height=height)
+            if action_choice == 'crop' and crop_type:
+                crop_to_square(image_path, crop_type)
+            elif action_choice == 'resize':
+                resize_image(image_path, max_size=max_size, width=width, height=height)
 
 if __name__ == "__main__":
     # Запрашиваем путь к папке с фотографиями
@@ -110,6 +113,7 @@ if __name__ == "__main__":
         crop_choice = input("Какую часть оставим? (top(left)/bottom(right)/center): ").strip().lower()
         crop_type = crop_choice if crop_choice in ['top', 'bottom', 'center'] else None
         width = height = max_size = None
+        date_suffix = None
 
     elif action_choice == 'resize':
         crop_type = None
@@ -148,7 +152,7 @@ if __name__ == "__main__":
         exit()
 
     if os.path.isdir(folder_path):
-        resize_images_in_folder(folder_path, max_size=max_size, width=width, height=height, date_suffix=date_suffix)
+        resize_images_in_folder(folder_path, max_size=max_size, width=width, height=height, date_suffix=date_suffix, crop_type=crop_type, action_choice=action_choice)
     else:
         print("Указанный путь не является папкой.")
 
