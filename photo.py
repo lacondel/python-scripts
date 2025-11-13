@@ -3,6 +3,25 @@ from PIL import Image
 from transliterate import translit
 from datetime import datetime
 
+def save_image_compatible(img, image_path):
+    """Сохраняет изображение в формат, совместимый с целевым расширением.
+    Для JPEG убирает альфа-канал, накладывая на белый фон.
+    """
+    ext = os.path.splitext(image_path)[1].lower()
+    if ext in ('.jpg', '.jpeg'):
+        # Приводим к RGB без альфы
+        if img.mode in ('RGBA', 'LA') or (img.mode == 'P' and ('transparency' in img.info)):
+            if img.mode != 'RGBA':
+                img = img.convert('RGBA')
+            background = Image.new('RGB', img.size, (255, 255, 255))
+            background.paste(img, mask=img.getchannel('A'))
+            img = background
+        elif img.mode != 'RGB':
+            img = img.convert('RGB')
+        img.save(image_path, quality=90, optimize=True)
+    else:
+        img.save(image_path)
+
 # Функция обрезания изображения до квадрата
 def crop_to_square(image_path, crop_type='center'):
     with Image.open(image_path) as img:
@@ -31,7 +50,7 @@ def crop_to_square(image_path, crop_type='center'):
             bottom = top + min_dim
 
         cropped_img = img.crop((left, top, right, bottom))
-        cropped_img.save(image_path)
+        save_image_compatible(cropped_img, image_path)
 
 # Функция изменения размеров изображения
 def resize_image(image_path, max_size=None, width=None, height=None):
@@ -61,7 +80,7 @@ def resize_image(image_path, max_size=None, width=None, height=None):
             # Проверяем, нужно ли изменять размер изображения
             if (new_width, new_height) != (orig_width, orig_height):
                 img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
-                img.save(image_path)
+                save_image_compatible(img, image_path)
                 print(f"Изображение {image_path} изменено до размеров {new_width}x{new_height}")
             else:
                 print(f"Изображение {image_path} не требует изменения размера")
@@ -74,11 +93,26 @@ def transliterate_filename(filename, date_suffix=None):
     transliterated_name = translit(name, 'ru', reversed=True) 
     
     if date_suffix:
-        new_name = f"{transliterated_name}_{date_suffix}{ext}"
+        new_name = f"{transliterated_name}_{date_suffix}.png"
     else:
-        new_name = f"{transliterated_name}{ext}"
+        new_name = f"{transliterated_name}.png"
     
     return new_name
+
+# Гарантирует, что изображение будет в PNG. При необходимости конвертирует и удаляет исходный файл.
+def ensure_png(original_path, target_png_path):
+    orig_ext = os.path.splitext(original_path)[1].lower()
+    if orig_ext != '.png':
+        with Image.open(original_path) as img:
+            img.save(target_png_path, format='PNG', optimize=True)
+        try:
+            os.remove(original_path)
+        except OSError:
+            pass
+        return target_png_path
+    else:
+        # Если уже PNG, просто возвращаем путь (переименование выполнится отдельно при необходимости)
+        return original_path
 
 # Функция изменения всех изображений в папке
 def resize_images_in_folder(folder_path, max_size=None, width=None, height=None, date_suffix='', crop_type=None, action_choice=''):
@@ -88,14 +122,17 @@ def resize_images_in_folder(folder_path, max_size=None, width=None, height=None,
         if filename.lower().endswith(('.png', '.jpg', '.jpeg')):
             image_path = os.path.join(folder_path, filename)
             
-            # Транслитерация имени файла и добавление даты
-            new_filename = transliterate_filename(filename, date_suffix)
+            # Сначала формируем целевое имя С PNG-расширением и выполняем конвертацию в PNG
+            new_filename = transliterate_filename(filename, date_suffix)  # всегда .png
             new_image_path = os.path.join(folder_path, new_filename)
 
-            # Переименование файла, если имя изменилось
-            if image_path != new_image_path:
-                os.rename(image_path, new_image_path)
-                image_path = new_image_path   # Обновляем путь к файлу
+            # Конвертация в PNG, если исходник не PNG; иначе просто переименуем при необходимости
+            if os.path.splitext(filename)[1].lower() != '.png':
+                image_path = ensure_png(image_path, new_image_path)
+            else:
+                if image_path != new_image_path:
+                    os.rename(image_path, new_image_path)
+                    image_path = new_image_path
 
             if action_choice == 'c' and crop_type:
                 crop_to_square(image_path, crop_type)
